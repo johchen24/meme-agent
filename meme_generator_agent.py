@@ -104,8 +104,54 @@ def main():
         model = st.selectbox(
             "Choose an AI model",
             ["Claude", "Deepseek", "OpenAI"],
-            
+            index=None,
+            placeholder="Select a model...",
+            key="model_select",
+            help="Claude/GPT-4o support vision; DeepSeek chat is text-only."
         )
+        
+        # Only show the API key box after a model is chosen
+        if model:
+            api_key = st.text_input(f"{model} API Key", type="password", key="api_key")
+        else:
+            api_key = ""
+            st.info("Choose a model before entering its API key.")
+            
+    st.subheader("🎨 Describe your meme idea")
+    query = st.text_input(
+        "Your idea",
+        placeholder="When you ask Javascript why your code isn't working...",
+        key="query_input",
+    )
+    
+    generate = st.button("Generate Meme 🚀", type="primary")
+    if generate:
+        if not model:
+            st.warning("Please choose a model first.")
+            st.stop()
+        if not api_key:
+            st.warning(f"Please enter your {model} API key.")
+            st.stop()
+        if not query or not query.strip():
+            st.warning("Please enter a meme idea first.")
+            st.stop()
+        
+        with st.spinner(f"🧠 {model} is generating your meme..."):
+            try:
+                meme_url = asyncio.run(generate_meme(query.strip(), model, api_key.strip()))
+            except Exception as e:
+                st.error(f"Error: {e}")
+            else:
+                if meme_url:
+                    st.success("✅ Meme generated!")
+                    st.image(
+                        meme_url,
+                        caption="Generated Meme Preview",
+                        use_container_width=True
+                    )
+                    st.markdown(f"**Direct image URL:** {meme_url}")
+                else:
+                    st.error("❌ No meme URL returned. Try a simpler idea or another model.")
 
 if __name__ == "__main__":
     main()
